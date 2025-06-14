@@ -13,7 +13,12 @@ repository = "https://github.com/clitic/vsd/tree/main/mp4decrypt"
 version = "0.5.1"
 
 [dependencies]
+libc = "0.2.173"
+serde_json = "1.0.140"
 
 [build-dependencies]
 bento4-src = { version = "0.1", path = "../bento4-src" }
 # bindgen = "0.60"
+
+[lib]
+crate-type = ["cdylib"]

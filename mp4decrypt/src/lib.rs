@@ -21,7 +21,11 @@ mod error;
 pub use error::{Error, ErrorType};
 
 use core::ffi::{c_char, c_int, c_uchar, c_uint};
-use std::{collections::HashMap, ffi::CString};
+use std::{collections::HashMap, ffi::CString, ffi::CStr};
+use std::ptr;
+
+use libc::malloc;
+
 
 unsafe extern "C" {
     fn decrypt_in_memory(
@@ -78,6 +82,7 @@ extern "C" fn decrypt_callback(decrypted_stream: *mut Vec<u8>, data: *const c_uc
 ///
 /// let decrypted_data = mp4decrypt::mp4decrypt(&[0, 0, 0, 112], &kid_key_pairs, None).unwrap();
 /// ```
+
 pub fn mp4decrypt(
     data: &[u8],
     keys: &HashMap<String, String>,
@@ -160,5 +165,95 @@ pub fn mp4decrypt(
                 err_type: ErrorType::Failed(x),
             },
         })
+    }
+}
+
+#[repr(C)]
+pub struct DecryptError {
+    pub code: c_int,
+    pub message: *const c_char,
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mp4decrypt_capi(
+    data_ptr: *const u8,
+    data_len: usize,
+    keys_json: *const c_char,
+    fragments_ptr: *const u8,
+    fragments_len: usize,
+    out_ptr: *mut *mut u8,
+    out_len: *mut usize,
+    err_out: *mut DecryptError,
+) -> c_int {
+    if data_ptr.is_null() || keys_json.is_null() || out_ptr.is_null() || out_len.is_null() {
+        return -1;
+    }
+
+    let data = unsafe { std::slice::from_raw_parts(data_ptr, data_len) };
+
+    let keys_str = unsafe {
+        match CStr::from_ptr(keys_json).to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                if !err_out.is_null() {
+                    let msg = CString::new("Invalid UTF-8 in keys_json").unwrap();
+                    unsafe {
+                        (*err_out).code = -2;
+                        (*err_out).message = msg.into_raw();
+                    }
+                }
+                return -2;
+            }
+        }
+    };
+
+    let keys: HashMap<String, String> = match serde_json::from_str(keys_str) {
+        Ok(k) => k,
+        Err(_) => {
+            if !err_out.is_null() {
+                let msg = CString::new("Failed to parse keys JSON").unwrap();
+                unsafe {
+                    (*err_out).code = -3;
+                    (*err_out).message = msg.into_raw();
+                }
+            }
+            return -3;
+        }
+    };
+
+    let fragments_info = if !fragments_ptr.is_null() && fragments_len > 0 {
+        Some(unsafe { std::slice::from_raw_parts(fragments_ptr, fragments_len) })
+    } else {
+        None
+    };
+
+    match mp4decrypt(data, &keys, fragments_info) {
+        Ok(output) => {
+            let len = output.len();
+            let buf = unsafe { libc::malloc(len) as *mut u8 };
+            if buf.is_null() {
+                return -4;
+            }
+            unsafe {
+                std::ptr::copy_nonoverlapping(output.as_ptr(), buf, len);
+                *out_ptr = buf;
+                *out_len = len;
+            }
+            0
+        }
+        Err(err) => {
+            if !err_out.is_null() {
+                let msg = CString::new(err.msg).unwrap();
+                unsafe {
+                    (*err_out).code = match err.err_type {
+                        ErrorType::InvalidFormat => 1,
+                        ErrorType::DataTooLarge => 2,
+                        ErrorType::Failed(x) => x,
+                    };
+                    (*err_out).message = msg.into_raw();
+                }
+            }
+            1
+        }
     }
 }
