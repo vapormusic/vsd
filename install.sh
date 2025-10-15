@@ -53,3 +53,4 @@ git clone https://github.com/tpoechtrager/osxcross $PACKAGES_DIR/osxcross
 curl -L https://github.com/joseluisq/macosx-sdks/releases/download/$MACOS_SDK_VERSION/MacOSX$MACOS_SDK_VERSION.sdk.tar.xz -o $PACKAGES_DIR/osxcross/tarballs/MacOSX$MACOS_SDK_VERSION.sdk.tar.xz
 cd $PACKAGES_DIR/osxcross
 UNATTENDED=1 ./build.sh
+
