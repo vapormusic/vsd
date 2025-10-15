@@ -29,9 +29,9 @@ jobs:
         - name: CD back to root
           run: ls
         - name: CD to mp4decrypt
-          run: cd ./vsd/mp4decrypt
+          run: cd ./mp4decrypt
         - name: Build vsd
-          run: cargo build --release
+          run: cargo build --release -p mp4decrypt
         - name: CD back to root
           run: cd ..
         - name: Set up upload environment
