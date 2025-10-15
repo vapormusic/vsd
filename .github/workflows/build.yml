@@ -27,9 +27,9 @@ jobs:
           with:
             version: "30.1"
         - name: CD back to root
-          run: cd ls
+          run: ls
         - name: CD to mp4decrypt
-          run: cd ./mp4decrypt
+          run: cd ./vsd/mp4decrypt
         - name: Build vsd
           run: cargo build --release
         - name: CD back to root
