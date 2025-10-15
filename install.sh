@@ -22,7 +22,6 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 . "$HOME/.cargo/env"
 rustup target add \
   aarch64-apple-darwin \
-  aarch64-linux-android \
   aarch64-pc-windows-msvc \
   aarch64-unknown-linux-musl \
   x86_64-apple-darwin \
@@ -42,11 +41,6 @@ rm protoc-$PROTOC_VERSION-linux-x86_64.zip
 
 echo "Installing Zig v$ZIG_VERSION"
 curl -L https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz | tar xJC $PACKAGES_DIR
-
-echo "Installing Android NDK v$ANDROID_NDK_VERSION"
-curl -L https://dl.google.com/android/repository/android-ndk-$ANDROID_NDK_VERSION-linux.zip -o android-ndk-$ANDROID_NDK_VERSION-linux.zip
-unzip android-ndk-$ANDROID_NDK_VERSION-linux.zip -d $PACKAGES_DIR
-rm android-ndk-$ANDROID_NDK_VERSION-linux.zip
 
 echo "Installing Osxcross"
 git clone https://github.com/tpoechtrager/osxcross $PACKAGES_DIR/osxcross
