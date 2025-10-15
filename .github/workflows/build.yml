@@ -26,8 +26,10 @@ jobs:
           uses: arduino/setup-protoc@v3
           with:
             version: "30.1"
+        - name: CD back to root
+          run: cd ls
         - name: CD to mp4decrypt
-          run: cd mp4decrypt
+          run: cd ./mp4decrypt
         - name: Build vsd
           run: cargo build --release
         - name: CD back to root
