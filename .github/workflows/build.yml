@@ -11,21 +11,28 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-            submodules: true
-      - name: Install protoc
-        uses: arduino/setup-protoc@v3
-        with:
-          version: "30.1"
-      - name: Build vsd
-        run: cargo build -p vsd
-      - name: Set up upload environment
-        uses: benjlevesque/short-sha@v3.0
-      - name: Upload linux build
-        uses: actions/upload-artifact@v4
-        with:
-          name: "vsd-${{ env.SHA }}-debug-x86_64-unknown-linux-gnu"
-          path: target/debug/vsd
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      runs-on: ${{ matrix.os }}
+      steps:
+        - uses: actions/checkout@v4
+          with:
+              submodules: true
+        - name: Install protoc
+          uses: arduino/setup-protoc@v3
+          with:
+            version: "30.1"
+        - name: CD to mp4decrypt
+          run: cd mp4decrypt
+        - name: Build vsd
+          run: cargo build --release
+        - name: CD back to root
+          run: cd ..
+        - name: Set up upload environment
+          uses: benjlevesque/short-sha@v3.0
+        - name: Upload linux build
+          uses: actions/upload-artifact@v4
+          with:
+            name: "mp4decrypt"
+            path: target/release
